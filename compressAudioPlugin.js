@@ -71,7 +71,7 @@ async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate) {
 
     if(matched.length > 0) {
         console.log("Similar file names found in raw audio folder! These must be corrected before continuing.");
-        //throw new Error("Similar file names found in raw audio folder! These must be corrected before continuing.");
+        throw new Error("Similar file names found in raw audio folder! These must be corrected before continuing.");
     }
     console.log("\tNo files matched.")
 
