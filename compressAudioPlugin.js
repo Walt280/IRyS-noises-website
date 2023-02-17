@@ -1,7 +1,6 @@
 import child_process from 'node:child_process';
 import fsp from 'node:fs/promises';
 import os from 'node:os';
-import process from 'node:process';
 import path from 'node:path';
 import util from 'node:util';
 
@@ -25,7 +24,7 @@ async function walk_fs_tree(input_path) {
     return result;
 }
 
-async function encode_audio(input_audio_dir, output_audio_dir) {
+async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate) {
     const promise_exec = util.promisify(child_process.exec);
 
     console.log("Checking for ffmpeg with libopus...");
@@ -34,17 +33,13 @@ async function encode_audio(input_audio_dir, output_audio_dir) {
         console.log("\tFound suitable ffmpeg.");
         await fsp.rm("test.opus");
     }
-    catch (e) {
-        console.log("ffmpeg check failed!")
-        console.log(`${e.name}: ${e.message}`);
-        console.log('stdout');
-        console.log(e.stdout);
-        console.log('stderr');
-        console.log(e.stderr);
+    catch (error) {
+        console.log("ffmpeg check failed, no ffmpeg with libopus found!")
+        throw error;
     }
     const valid_extensions = [ ".mp3", ".wav" ];
-    console.log(`Searching for audio files in ${input_audio_dir} ending with ${valid_extensions.join("/")}.`)
-    const input_files = (await walk_fs_tree(input_audio_dir))
+    console.log(`Searching for audio files in ${raw_audio_dir} ending with ${valid_extensions.join("/")}.`)
+    const input_files = (await walk_fs_tree(raw_audio_dir))
         .filter((elem) => {
             let ext = path.extname(elem);
             if(valid_extensions.includes(ext)) {
@@ -68,15 +63,15 @@ async function encode_audio(input_audio_dir, output_audio_dir) {
                 elem_parts.ext !== elem2_parts.ext;
         });
         if(f && matched.find((e) => f === e) === undefined && matched.find(e => elem === e) === undefined) {
-            console.log(`${path.relative(input_audio_dir, elem)} has similar name to ${path.relative(input_audio_dir, f)}!`)
+            console.log(`${path.relative(raw_audio_dir, elem)} has similar name to ${path.relative(raw_audio_dir, f)}!`)
             matched.push(f);
             matched.push(elem);
         }
     });
 
     if(matched.length > 0) {
-        console.log("Similar file names found! These must be corrected before continuing.");
-        process.exit(1);
+        console.log("Similar file names found in raw audio folder! These must be corrected before continuing.");
+        //throw new Error("Similar file names found in raw audio folder! These must be corrected before continuing.");
     }
     console.log("\tNo files matched.")
 
@@ -86,9 +81,9 @@ async function encode_audio(input_audio_dir, output_audio_dir) {
         progress_bar.start(input_files.length, 0);
 
         await bluebird.Promise.map(input_files, async (input_file) => {
-            let input_rel_path = path.relative(input_audio_dir, input_file);
+            let input_rel_path = path.relative(raw_audio_dir, input_file);
             let output_path = path.join(
-                output_audio_dir, 
+                compressed_audio_dir, 
                 path.dirname(input_rel_path), 
                 path.basename(input_file, path.extname(input_file)) + ".opus");
             await fsp.mkdir(path.dirname(output_path), { recursive: true });
@@ -101,19 +96,15 @@ async function encode_audio(input_audio_dir, output_audio_dir) {
             catch (e) { }
 
             if(input_modified > output_modified) {
-                await promise_exec(`ffmpeg -loglevel error -y -i "${input_file}" -c:a libopus -b:a 160000 "${output_path}"`);
+                await promise_exec(`ffmpeg -loglevel error -y -i "${input_file}" -c:a libopus -b:a ${bitrate} "${output_path}"`);
             }
             
             progress_bar.increment();
         }, { concurrency: os.cpus().length });
     }
-    catch (e) {
+    catch (error) {
         console.log("audio encode failed!")
-        console.log(`${e.name}: ${e.message}`);
-        console.log('stdout');
-        console.log(e.stdout);
-        console.log('stderr');
-        console.log(e.stderr);
+        throw error;
     }
     finally {
         progress_bar.stop();
@@ -122,20 +113,48 @@ async function encode_audio(input_audio_dir, output_audio_dir) {
 
 let viteConfig = null;
 
-export default function compressAudio({ input_audio_dir = '', output_folder = ''}) {
+export default function compressAudio({ rawAudioDir = '', compressedAudioDir = '', bitrate = 160000}) {
     return {
         name: 'compressAudioPlugin',
-        order: 'pre',
+        order: 'post',
         sequential: 'true',
         configResolved(resolvedConfig) {
             viteConfig = resolvedConfig;
         },
         async buildStart() {
-            if(!input_audio_dir) {
-                throw new Error("input_audio_dir cannot be empty!");
+            if(!rawAudioDir) {
+                throw new Error("rawAudioDir cannot be empty!");
             }
-            const output_audio_dir = path.resolve(viteConfig?.build?.outDir || 'dist', output_folder);
-            await encode_audio(path.resolve(input_audio_dir), output_audio_dir);
+
+            if(!compressedAudioDir) {
+                throw new Error("compressedAudioDir cannot be empty!");
+            }
+
+            if(bitrate < 0 || bitrate > 256000) {
+                throw new Error("bitrate must be between 0 and 512000");
+            }
+
+            await encode_audio(path.resolve(rawAudioDir), compressedAudioDir, bitrate);
+        },
+        async writeBundle() {
+            if(viteConfig.command === "build") {
+                let fileList = await walk_fs_tree(compressedAudioDir);
+                let buildDirName = viteConfig?.build?.outDir || 'dist';
+                let buildDir = path.resolve(buildDirName);
+                
+                let copyProgressBar = new cliProgress.SingleBar({
+                    format: `Copying compressed audio to ${buildDirName}: {bar} {percentage}% | ETA: {eta}s | {value}/{total}`
+                }, cliProgress.Presets.shades_classic);
+                copyProgressBar.start(fileList.length, 0);
+                for(let file of fileList) {
+                    let relPath = path.relative(compressedAudioDir, file);
+                    let buildDirPath = path.resolve(buildDir, relPath);
+                    await fsp.mkdir(path.dirname(buildDirPath), { recursive: true });
+                    await fsp.copyFile(file, buildDirPath);
+                    copyProgressBar.increment();
+                }
+                copyProgressBar.stop();
+            }
         }
     }
 }

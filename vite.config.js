@@ -5,8 +5,18 @@ import compressAudio from './compressAudioPlugin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    port: 5173,
+    strictPort: true,
+    proxy: {
+      "^/Audios.*": {
+        target: "http://localhost:5173",
+        rewrite: (path) => path.replace("/Audios", "clips/compressed/Audios")
+      }
+    }
+  },
   plugins: [
     vue(),
-    compressAudio({ "input_audio_dir": "raw-audio", "output_folder": "Audios" })
+    compressAudio({ rawAudioDir: "clips/raw", compressedAudioDir: "clips/compressed", bitrate: 192000 })
   ],
 })
