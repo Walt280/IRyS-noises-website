@@ -17,6 +17,6 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    compressAudio({ rawAudioDir: "clips/raw", compressedAudioDir: "clips/compressed", bitrate: 192000 })
+    compressAudio({ rawAudioDir: "clips/raw", compressedAudioDir: "clips/compressed", bitrate: 160000 })
   ],
 })

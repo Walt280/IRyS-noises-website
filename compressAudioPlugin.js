@@ -113,7 +113,7 @@ async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate) {
 
 let viteConfig = null;
 
-export default function compressAudio({ rawAudioDir = '', compressedAudioDir = '', bitrate = 160000}) {
+export default function compressAudio({ rawAudioDir = '', compressedAudioDir = '', bitrate = 160000 }) {
     return {
         name: 'compressAudioPlugin',
         order: 'post',
@@ -132,6 +132,13 @@ export default function compressAudio({ rawAudioDir = '', compressedAudioDir = '
 
             if(bitrate < 0 || bitrate > 256000) {
                 throw new Error("bitrate must be between 0 and 512000");
+            }
+
+            if(viteConfig.command === "build") {
+                let fileList = await walk_fs_tree(compressedAudioDir);
+                for(let file of fileList) {
+                    await fsp.rm(file);
+                }
             }
 
             await encode_audio(path.resolve(rawAudioDir), compressedAudioDir, bitrate);
