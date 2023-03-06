@@ -24,7 +24,7 @@ async function walk_fs_tree(input_path) {
     return result;
 }
 
-async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate) {
+async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate, valid_extensions) {
     const promise_exec = util.promisify(child_process.exec);
 
     console.log("Checking for ffmpeg with libopus...");
@@ -37,7 +37,7 @@ async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate) {
         console.log("ffmpeg check failed, no ffmpeg with libopus found!")
         throw error;
     }
-    const valid_extensions = [ ".mp3", ".wav" ];
+    
     console.log(`Searching for audio files in ${raw_audio_dir} ending with ${valid_extensions.join("/")}.`)
     const input_files = (await walk_fs_tree(raw_audio_dir))
         .filter((elem) => {
@@ -111,9 +111,29 @@ async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate) {
     }
 }
 
+async function rewrite_audiolists(raw_audiolist_dir, gen_audiolist_dir, valid_extensions) {
+    const input_files = (await walk_fs_tree(raw_audiolist_dir)).filter((elem) => path.extname(elem) === ".json");
+
+    for(const filePath of input_files) {
+        let file = await fsp.open(filePath);
+        let fileData = JSON.parse(await file.readFile({encoding: "utf8"}));
+        fileData.forEach((element, index) => {
+            if(valid_extensions.includes(path.extname(element.file))) {
+                fileData[index].file = path.basename(element.file) + ".opus";
+            }
+            else {
+                console.log(`Skipped entry ${element.file}`);
+            }
+        });
+
+        let outputFile = await fsp.open(path.join(gen_audiolist_dir, path.basename(filePath)), "w+");
+        await fsp.writeFile(outputFile, JSON.stringify(fileData), {encoding: "utf8"});
+    }
+}
+
 let viteConfig = null;
 
-export default function compressAudio({ rawAudioDir = '', compressedAudioDir = '', bitrate = 160000 }) {
+export default function compressAudio({ rawAudioDir = '', compressedAudioDir = '', rawAudioListDir = '', generatedAudioListDir = '', bitrate = 160000, valid_extensions = [ ".mp3", ".wav" ] }) {
     return {
         name: 'compressAudioPlugin',
         order: 'post',
@@ -141,7 +161,8 @@ export default function compressAudio({ rawAudioDir = '', compressedAudioDir = '
                 }
             }
 
-            await encode_audio(path.resolve(rawAudioDir), compressedAudioDir, bitrate);
+            await encode_audio(path.resolve(rawAudioDir), path.resolve(compressedAudioDir), bitrate, valid_extensions);
+            await rewrite_audiolists(path.resolve(rawAudioListDir), path.resolve(generatedAudioListDir), valid_extensions);
         },
         async writeBundle() {
             if(viteConfig.command === "build") {
