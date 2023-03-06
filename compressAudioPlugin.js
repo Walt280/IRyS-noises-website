@@ -59,7 +59,7 @@ async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate, valid_
         let f = array.find((elem2) => {
             let elem2_parts = path.parse(elem2);
             return elem_parts.dir === elem2_parts.dir &&
-                elem_parts.name === elem2_parts.name &&
+                elem_parts.name.toLowerCase() === elem2_parts.name.toLowerCase() && // toLowerCase to account for Windows' case-insensitive filenames
                 elem_parts.ext !== elem2_parts.ext;
         });
         if(f && matched.find((e) => f === e) === undefined && matched.find(e => elem === e) === undefined) {
@@ -155,10 +155,10 @@ export default function compressAudio({ rawAudioDir = '', compressedAudioDir = '
             }
 
             if(viteConfig.command === "build") {
-                let fileList = await walk_fs_tree(compressedAudioDir);
-                for(let file of fileList) {
-                    await fsp.rm(file);
-                }
+                await fsp.rm(compressedAudioDir, {
+                    force: true,
+                    recursive: true
+                });
             }
 
             await encode_audio(path.resolve(rawAudioDir), path.resolve(compressedAudioDir), bitrate, valid_extensions);

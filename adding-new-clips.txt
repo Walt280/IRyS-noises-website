@@ -1,0 +1,6 @@
+Note:
+
+New clips go into clip/raw/Audios/<relevent folder>
+Updated audiolists go into audiolists
+
+Make sure it works like this otherwise the script will not pick up on new clips!
