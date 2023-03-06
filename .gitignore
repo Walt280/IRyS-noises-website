@@ -28,3 +28,6 @@ notes.txt
 #Encoded Audio
 public/Audios/
 clips/compressed/
+
+#Rewritten Audiolists
+src/assets/Audiolists/

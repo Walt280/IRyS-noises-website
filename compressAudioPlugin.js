@@ -112,22 +112,22 @@ async function encode_audio(raw_audio_dir, compressed_audio_dir, bitrate, valid_
 }
 
 async function rewrite_audiolists(raw_audiolist_dir, gen_audiolist_dir, valid_extensions) {
+    console.log("Rewriting audiolists...");
     const input_files = (await walk_fs_tree(raw_audiolist_dir)).filter((elem) => path.extname(elem) === ".json");
 
     for(const filePath of input_files) {
-        let file = await fsp.open(filePath);
-        let fileData = JSON.parse(await file.readFile({encoding: "utf8"}));
+        let fileData = JSON.parse(await fsp.readFile(filePath, {encoding: "utf8"}));
         fileData.forEach((element, index) => {
             if(valid_extensions.includes(path.extname(element.file))) {
-                fileData[index].file = path.basename(element.file) + ".opus";
+                fileData[index].file = path.basename(element.file, path.extname(element.file)) + ".opus";
             }
             else {
                 console.log(`Skipped entry ${element.file}`);
             }
         });
 
-        let outputFile = await fsp.open(path.join(gen_audiolist_dir, path.basename(filePath)), "w+");
-        await fsp.writeFile(outputFile, JSON.stringify(fileData), {encoding: "utf8"});
+        let outputFile = path.join(gen_audiolist_dir, path.basename(filePath));
+        await fsp.writeFile(outputFile, JSON.stringify(fileData, 2), {encoding: "utf8"});
     }
 }
 
