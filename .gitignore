@@ -24,3 +24,7 @@ notes.txt
 *.njsproj
 *.sln
 *.sw?
+
+#Encoded Audio
+public/Audios/
+clips/compressed/
