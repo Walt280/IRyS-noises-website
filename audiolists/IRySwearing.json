@@ -16,11 +16,6 @@
   },
   {
     "category": "IRySwearing",
-    "file": "IRyS_BITCH.wav",
-    "title": "BITCH"
-  },
-  {
-    "category": "IRySwearing",
     "file": "IRyS_badbeep.mp3",
     "title": "Badbeep"
   },
@@ -46,8 +41,13 @@
   },
   {
     "category": "IRySwearing",
-    "file": "IRyS_bitch.mp3",
-    "title": "Bitch"
+    "file": "IRyS_bitch_01.mp3",
+    "title": "Bitch 01"
+  },
+  {
+    "category": "IRySwearing",
+    "file": "IRyS_Bitch_02.wav",
+    "title": "Bitch 02"
   },
   {
     "category": "IRySwearing",
@@ -236,11 +236,6 @@
   },
   {
     "category": "IRySwearing",
-    "file": "IRyS_SHIT.wav",
-    "title": "SHIT"
-  },
-  {
-    "category": "IRySwearing",
     "file": "IRyS_saved_my_ass.mp3",
     "title": "Saved my ass"
   },
@@ -268,5 +263,10 @@
     "category": "IRySwearing",
     "file": "IRyS_so_much_shit_is_going_on.wav",
     "title": "So much shit is going on"
+  },
+  {
+    "category": "IRySwearing",
+    "file": "IRyS_Ssshit.wav",
+    "title": "Ssshit"
   }
 ]

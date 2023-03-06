@@ -321,11 +321,6 @@
   },
   {
     "category": "IRySnoises",
-    "file": "IRyS_DOKI_DOKI.wav",
-    "title": "DOKI DOKI"
-  },
-  {
-    "category": "IRySnoises",
     "file": "IRyS_DUH.mp3",
     "title": "DUH"
   },
@@ -406,8 +401,13 @@
   },
   {
     "category": "IRySnoises",
-    "file": "IRyS_doki_doki.mp3",
-    "title": "Doki doki"
+    "file": "IRyS_doki_doki_01.mp3",
+    "title": "Doki doki 01"
+  },
+  {
+    "category": "IRySnoises",
+    "file": "IRyS_Doki_doki_02.wav",
+    "title": "Doki doki 02"
   },
   {
     "category": "IRySnoises",
@@ -1103,6 +1103,11 @@
     "category": "IRySnoises",
     "file": "IRyS_my_uuuuuuuuuuh.wav",
     "title": "My uuuuuuuuuuh"
+  },
+  {
+    "category": "IRySnoises",
+    "file": "IRyS_NOISESNOISESNOISES.wav",
+    "title": "NOISESNOISESNOISES"
   },
   {
     "category": "IRySnoises",
