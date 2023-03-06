@@ -21,7 +21,7 @@ jobs:
         uses: bahmutov/npm-install@v1
         
       - name: Install ffmpeg
-      - uses: FedericoCarboni/setup-ffmpeg@v2
+        uses: FedericoCarboni/setup-ffmpeg@v2
         id: setup-ffmpeg
 
       - name: Build project
