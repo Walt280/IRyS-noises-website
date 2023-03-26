@@ -1,5 +1,6 @@
 <script setup>
-  import { ref } from 'vue'
+  import { ref } from 'vue';
+  import VanillaContextMenu from 'vanilla-context-menu';
 
   const {category, file, title, nouveau} = defineProps({
     category: String,
@@ -26,7 +27,7 @@
       played.currentTime = 0;
       isPlayed.value = false;
     }else{
-      played =  new Audio(audio);
+      played = new Audio(audio);
       played.play()
 
       played.addEventListener("loadeddata", () => {
@@ -38,11 +39,52 @@
       })
     }
   }
+
+  function downloadClip() {
+
+  }
+
+  async function copyClipUrlToClipboard() {
+    
+  }
+</script>
+
+<script>
+  export default {
+    mounted() {
+      const contextMenu = new VanillaContextMenu({
+        scope: this.$refs.soundBtn,
+        menuItems: [
+          {
+            label: 'Download clip',
+            callback: () => {
+              var link = document.createElement("a");
+              // If you don't know the name or want to use
+              // the webserver default set name = ''
+              link.setAttribute('download', "");
+              link.href = this.$refs.soundLink;
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            },
+          },
+          'hr',
+          {
+            label: 'Copy clip link to clipboard',
+            callback: async () => {
+              let clipUrl = `${window.location.href}#${encodeURIComponent(this.title)}`;
+              await window.navigator.clipboard.writeText(clipUrl);
+            }
+          },
+        ],
+      });
+    }
+  }
 </script>
 
 <template> 
-  <a :href="audio" :class="{ 'played': isPlayed}" @click.stop.prevent="onClick">
-    <button :id="title" :class="{ 'new': isNew }" type="button" @click="playSound();" :style="{'animation-duration': duration + 's'}">
+  <a ref="soundLink" :href="audio" :class="{'played': isPlayed}" @click.stop.prevent="onClick">
+    <button ref="soundBtn" :id="title" :class="{ 'new': isNew }" type="button" @click="playSound();" :style="{'animation-duration': duration + 's'}">
       <div id="btn-overlay">
         {{ title }}
       </div>
